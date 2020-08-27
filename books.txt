@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS books(
   book_id INTEGER PRIMARY KEY AUTO_INCREMENT,
-  author INTEGER UNSIGNED,
+  author_id INTEGER UNSIGNED,
   title VARCHAR(100) NOT NULL ,
   year INTEGER UNSIGNED NOT NULL DEFAULT 1900,
   language VARCHAR(2) NOT NULL DEFAULT 'es' COMMENT 'ISO 639- Language',
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS authors (
   nationality VARCHAR(3)
 );
 
-CREATE TABLE cliesnts (
+CREATE TABLE clients (
   client_id INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(50) NOT NULL,
   email VARCHAR(100) NOT NULL UNIQUE,
@@ -27,3 +27,285 @@ CREATE TABLE cliesnts (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS operations (
+  operation_id INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+  book_id INTEGER UNSIGNED,
+  client_id INTEGER UNSIGNED,
+  type ENUM('S','B','R') NOT NULL COMMENT "S=SOLD,B=BORROWED,R=RETURNED",
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  finished TINYINT(1) NOT NULL
+);
+
+
+INSERT INTO authors(author_id, name, nationality)
+VALUES('', 'Juan Rulfo', 'MEX');
+
+INSERT INTO authors(name, nationality)
+VALUES('Gabriel García Márquez', 'COL');
+
+INSERT INTO authors
+VALUES('','Juan Gabriel Vasquez', 'COL');
+
+INSERT INTO authors(name, nationality)
+VALUES('Julio Cortázar', 'ARG'),
+('Isabel Allende', 'CHI'),
+('Octavio Paz', 'MEX'),
+('Juan Carlos Onetti', 'URU')
+;
+
+INSERT INTO`clients`(client_id, name, email, birthdate, gender, active) VALUES
+	(1,'Maria Dolores Gomez','Maria Dolores.95983222J@random.names','1971-06-06','F',1)
+ON DUPLICATE KEY UPDATE active = VALUES(active);
+
+INSERT INTO books(title, author_id, year)
+VALUES('Vuelta al Laberinto de la Soledad',
+(SELECT author_id FROM authors
+WHERE name = 'Octavio Paz'
+Limit 1), 1960
+);
+
+mysql -u root -p < esquema.sql
+
+mysql -u root -p < datos.sql
+
+//For windows
+mysql> source C:/Users/Nic/Documents/Platzi Courses/SQL & MySQL/curso_platzi.sql
+
+//Select a feature
+select "column" from table
+
+//Limit of data
+SELECT gender FROM clients limit 10;
+
+//now()
+select NOW();
+SELECT YEAR(NOW())
+
+//Query to know the age of the clients
+SELECT YEAR(NOW()) - YEAR(birthdate) FROM clients;
+
+//like 
+SELECT * FROM clients WHERE name like '%Saave%';
+
+SELECT name, email, YEAR(NOW()) - YEAR(birthdate) AS edad,gender
+FROM clients
+WHERE gender = 'F'
+AND name LIKe '%Lop%'
+
+//Take the total of entries
+SELECT COUNT(*) FROM books;
+
+//Limit of authors
+select * from authors where author_id > 0 and author_id <= 5;
+
+//Joins
+SELECT b.book_id, a.name, a.author_id, b.title
+FROM books as b
+INNER JOIN authors AS a
+on a.author_id = b.author_id
+WHERE a.author_id between 1 AND 5;
+
+//JOIN
+SELECT c.name, b.title, a.name, t.type
+FROM transactions as t
+JOIN books as b
+ON t.book_id = b.book_id
+JOIN clients as c
+ON t.client_id = c.client_id
+JOIN authors as a
+ON b.author_id = a.author_id
+WHERE c.gender = 'M'
+AND t.type IN ('sell','lend');
+
+//
+SELECT b.title, a.name
+FROM authors as a, books as b
+WHERE a.author_id = b.author_id;
+limit 10;
+
+//INNER JOIN
+SELECT b.title, a.name
+FROM books as b
+INNER JOIN authors as a
+ON a.author_id = b.author_id
+LIMIT 10;
+
+//
+SELECT a.author_id, a.name, a.nationality, b.title
+FROM authors AS a
+JOIN books as b
+ON b.author_id = a.author_id
+WHERE a.author_id between 1 and 5
+ORDER BY a.author_id desc;
+
+//Name desc
+SELECT a.author_id, a.name, a.nationality, b.title
+FROM authors AS a
+JOIN books as b
+ON b.author_id = a.author_id
+WHERE a.author_id between 1 and 5
+ORDER BY a.name desc;
+
+//Get count of books of author
+SELECT a.author_id, a.name, a.nationality, COUNT(b.book_id)
+FROM authors AS a
+LEFT JOIN books as b
+ON b.author_id = a.author_id
+WHERE a.author_id between 1 and 5
+GROUP BY a.author_id
+ORDER BY a.author_id;
+
+
+//Inner Join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n> 
+FROM Tabla_A A
+INNER JOIN Tabla_B B
+ON A.pk = B.pk
+
+//Left Join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n> 
+FROM Tabla_A A
+LEFT JOIN Tabla_B B
+ON A.pk = B.pk
+
+//Right Join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n>
+FROM Tabla_A A
+RIGHT JOIN Tabla_B B
+ON A.pk = B.pk
+
+//Outer Join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n>
+FROM Tabla_A A
+FULL OUTER JOIN Tabla_B B
+ON A.pk = B.pk
+
+//Left excluding join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n>
+FROM Tabla_A A
+LEFT JOIN Tabla_B B
+ON A.pk = B.pk
+WHERE B.pk IS NULL
+
+//Right Excluding Join
+SELECT <columna_1> , <columna_2>,  <columna_3> ... <columna_n>
+FROM Tabla_A A
+RIGHT JOIN Tabla_B B
+ON A.pk = B.pk
+WHERE A.pk IS NULL
+
+//Outer Excluding Join
+SELECT <select_list>
+FROM Table_A A
+FULL OUTER JOIN Table_B B
+ON A.Key = B.Key
+WHERE A.Key IS NULL OR B.Key IS NULL
+
+
+1.-¿Qué nacionalidades hay?
+
+SELECT nationality FROM authors;
+
+SELECT DISTINCT nationality FROM authors;
+
+2.¿Cuántos escreitores hay de cada nacionalidad?
+
+SELECT nationality, COUNT(author_id) AS c_authors
+FROM authors
+WHERE nationality IS NOT NULL
+AND nationality NOT IN ('RUS','AUT')
+GROUP BY nationality
+ORDER BY c_authors DESC, nationality ASC
+
+4.-¿Cuál es el promedio/desviación standard del precio de los libros?
+
+SELECT nationality, COUNT(book_id) as libros, AVG(price) as prom, STDDEV(price) AS std
+FROM books as b
+JOIN authors as a
+ON a.author_id = b.author_id
+GROUP BY nationality
+ORDER BY libros DESC;
+
+6.¿ Cuál es el precio mínimo/máximo de un libro?
+
+SELECT a.nationality, MAX(price), MIN(PRICE)
+FROM books as b
+JOIN authors AS a
+ON a.author_id = b.author_id
+GROUP BY nationality
+
+SELECT c.name, t.type, b.title, 
+CONCAT(a.name, "(", a.nationality, ")") as autor,
+TO_DAYS(NOW()) - TO_DAYS(t.created_at) AS ago
+FROM transactions AS t
+LEFT JOIN clients AS c
+ON c.client_id = t.client_id
+LEFT JOIN books AS b
+ON b.book_id = t.book_id
+LEFT JOIN authors AS a
+ON b.author_id = a.author_id
+
+
+//Bring random data
+select * from authors order by rand() limit 10;
+
+//Delete with the suggestion of "limit"
+delete from authors where author_id = 161 limit 1
+
+//Brin random clients
+select client_id, name from clients order by rand() limit 10;
+
+
+//Update
+UPDATE tabla
+SET
+    COLUMNAS[]
+WHERE
+LIMIT 1;
+
+UPDATE clients
+SET active = 0
+WHERE client_id = 77
+LIMIT 1;
+
+UPDATE clients
+SET 
+email = 'javier@'
+WHERE client_id IN (1,6,8,27,90)
+OR name like '%Lopez%' 
+LIMIT 1;
+
+//Update status
+UPDATE clients
+SET active = 0
+WHERE client_id IN (1,6,8,27,90)
+OR name like '%Lopez%' 
+LIMIT 1;
+
+//Truncate
+truncate transactions;
+
+//Distinct
+select distinct nationaility from authors;
+
+
+//Super Queries
+select distinct nationality from authors;
+
+//More precise count
+select count(book_id) from books;
+
+//Sum 1
+select sum(price) from books where sellable = 1;
+
+//Multiplicaciónde inventario
+select sum(price*copies) from books where sellable = 1;
+
+//How many dollars we have on no sellable books
+select sellable, sum(price*copies) from books group by sellable;
+
+//Conditionals
+select count(book_id), sum(if(year < 1950, 1, 0)) as '<1950' from books;
+ 
